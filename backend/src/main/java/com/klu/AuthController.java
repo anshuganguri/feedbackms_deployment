@@ -29,7 +29,7 @@ public class AuthController {
 	
 	@PostMapping("/signup")
 	public String fun2(@RequestBody User user) {
-		user.setPassword(cryp.encryptData(user.getPassword()));
+		// Store password as plain text (no encryption)
 		return obj.insertData(user);
 	}
 	@PostMapping("/login")

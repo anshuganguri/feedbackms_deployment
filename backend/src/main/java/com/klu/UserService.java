@@ -23,10 +23,9 @@ public class UserService {
 			return user;
 		}
 		else {
-			if(new Cryptography().decryptData(user2.getPassword()).equals(user.getPassword())) {
+			if(user2.getPassword().equals(user.getPassword())) {
 				return user2;
-			}
-			else {
+			} else {
 				return user;
 			}
 		}

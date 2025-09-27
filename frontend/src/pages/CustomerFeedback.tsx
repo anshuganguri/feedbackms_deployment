@@ -26,7 +26,7 @@ const SERVICES = [
   'Netflix',
 ];
 
-const API_URL = 'http://localhost:8090/feedback_management'; // 👈 adjust to your Spring Boot backend
+const API_URL = 'http://fms-backend:8081/backend1'; // Docker Compose backend service
 
 const CustomerFeedback: React.FC = () => {
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);

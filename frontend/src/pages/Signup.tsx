@@ -5,7 +5,13 @@ import { useToast } from '../contexts/ToastContext';
 import { User, Mail, Lock, UserPlus } from 'lucide-react';
 
 const Signup: React.FC = () => {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    name: string;
+    email: string;
+    password: string;
+    confirmPassword: string;
+    role: 'CUSTOMER' | 'ADMIN';
+  }>({
     name: '',
     email: '',
     password: '',
@@ -29,7 +35,12 @@ const Signup: React.FC = () => {
     setLoading(true);
 
     try {
-      await signup(formData.name, formData.email, formData.password, formData.role);
+      await signup(
+        formData.name,
+        formData.email,
+        formData.password,
+        formData.role as 'CUSTOMER' | 'ADMIN'
+      );
       showToast('Account created successfully!', 'success');
       
       // Redirect based on role
@@ -105,7 +116,10 @@ const Signup: React.FC = () => {
                 id="role"
                 name="role"
                 value={formData.role}
-                onChange={(e) => setFormData({...formData, role: e.target.value})}
+                onChange={(e) => setFormData({
+                  ...formData,
+                  role: e.target.value as 'CUSTOMER' | 'ADMIN',
+                })}
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
               >
                 <option value="CUSTOMER">Customer</option>
