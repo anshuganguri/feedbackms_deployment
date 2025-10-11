@@ -46,7 +46,7 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
   }
 };
 
-const API_URL = 'http://fms-backend:8081/backend1'; // Docker Compose backend service
+const API_URL = 'http://localhost:9080/backend'; // Local backend for development
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, {

@@ -26,7 +26,7 @@ const SERVICES = [
   'Netflix',
 ];
 
-const API_URL = 'http://fms-backend:8081/backend1'; // Docker Compose backend service
+const API_URL = 'http://localhost:9080/backend'; // Local backend for development
 
 const CustomerFeedback: React.FC = () => {
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
