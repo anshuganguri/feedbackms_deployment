@@ -24,26 +24,33 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
-        fetch-depth: 0
+        fetch-depth: 1
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
 
-    - name: Verify Docker Hub credentials
-      if: github.event_name != 'pull_request'
+    - name: Check if secrets are available
+      id: check-secrets
       run: |
-        if [ -z "${{ secrets.DOCKERHUB_USERNAME }}" ] || [ -z "${{ secrets.DOCKERHUB_TOKEN }}" ]; then
-          echo "❌ Error: DOCKERHUB_USERNAME and DOCKERHUB_TOKEN secrets are required"
-          echo "Please set up these secrets in your repository settings:"
-          echo "1. Go to Settings → Secrets and variables → Actions"
-          echo "2. Add DOCKERHUB_USERNAME with your Docker Hub username"
-          echo "3. Add DOCKERHUB_TOKEN with your Docker Hub access token"
-          exit 1
+        if [ "${{ github.event_name }}" != "pull_request" ]; then
+          if [ -n "${{ secrets.DOCKERHUB_USERNAME }}" ] && [ -n "${{ secrets.DOCKERHUB_TOKEN }}" ]; then
+            echo "secrets-available=true" >> $GITHUB_OUTPUT
+            echo "✅ Docker Hub credentials are configured"
+          else
+            echo "secrets-available=false" >> $GITHUB_OUTPUT
+            echo "⚠️ Warning: Docker Hub secrets not configured. Build will proceed but images won't be pushed."
+            echo "To enable pushing to Docker Hub:"
+            echo "1. Go to Settings → Secrets and variables → Actions"
+            echo "2. Add DOCKERHUB_USERNAME with your Docker Hub username"
+            echo "3. Add DOCKERHUB_TOKEN with your Docker Hub access token"
+          fi
+        else
+          echo "secrets-available=false" >> $GITHUB_OUTPUT
+          echo "ℹ️ Pull request detected - build only, no push"
         fi
-        echo "✅ Docker Hub credentials are configured"
 
     - name: Log in to Docker Hub
-      if: github.event_name != 'pull_request'
+      if: steps.check-secrets.outputs.secrets-available == 'true'
       uses: docker/login-action@v3
       with:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
@@ -57,9 +64,6 @@ jobs:
         tags: |
           type=ref,event=branch
           type=ref,event=pr
-          type=semver,pattern={{version}}
-          type=semver,pattern={{major}}.{{minor}}
-          type=semver,pattern={{major}}
           type=raw,value=latest,enable={{is_default_branch}}
 
     - name: Build and push Frontend Docker image
@@ -67,7 +71,7 @@ jobs:
       with:
         context: ./frontend
         file: ./frontend/Dockerfile
-        push: ${{ github.event_name != 'pull_request' }}
+        push: ${{ steps.check-secrets.outputs.secrets-available == 'true' }}
         tags: ${{ steps.meta-frontend.outputs.tags }}
         labels: ${{ steps.meta-frontend.outputs.labels }}
         cache-from: type=gha
@@ -84,26 +88,33 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
-        fetch-depth: 0
+        fetch-depth: 1
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
 
-    - name: Verify Docker Hub credentials
-      if: github.event_name != 'pull_request'
+    - name: Check if secrets are available
+      id: check-secrets
       run: |
-        if [ -z "${{ secrets.DOCKERHUB_USERNAME }}" ] || [ -z "${{ secrets.DOCKERHUB_TOKEN }}" ]; then
-          echo "❌ Error: DOCKERHUB_USERNAME and DOCKERHUB_TOKEN secrets are required"
-          echo "Please set up these secrets in your repository settings:"
-          echo "1. Go to Settings → Secrets and variables → Actions"
-          echo "2. Add DOCKERHUB_USERNAME with your Docker Hub username"
-          echo "3. Add DOCKERHUB_TOKEN with your Docker Hub access token"
-          exit 1
+        if [ "${{ github.event_name }}" != "pull_request" ]; then
+          if [ -n "${{ secrets.DOCKERHUB_USERNAME }}" ] && [ -n "${{ secrets.DOCKERHUB_TOKEN }}" ]; then
+            echo "secrets-available=true" >> $GITHUB_OUTPUT
+            echo "✅ Docker Hub credentials are configured"
+          else
+            echo "secrets-available=false" >> $GITHUB_OUTPUT
+            echo "⚠️ Warning: Docker Hub secrets not configured. Build will proceed but images won't be pushed."
+            echo "To enable pushing to Docker Hub:"
+            echo "1. Go to Settings → Secrets and variables → Actions"
+            echo "2. Add DOCKERHUB_USERNAME with your Docker Hub username"
+            echo "3. Add DOCKERHUB_TOKEN with your Docker Hub access token"
+          fi
+        else
+          echo "secrets-available=false" >> $GITHUB_OUTPUT
+          echo "ℹ️ Pull request detected - build only, no push"
         fi
-        echo "✅ Docker Hub credentials are configured"
 
     - name: Log in to Docker Hub
-      if: github.event_name != 'pull_request'
+      if: steps.check-secrets.outputs.secrets-available == 'true'
       uses: docker/login-action@v3
       with:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
@@ -117,9 +128,6 @@ jobs:
         tags: |
           type=ref,event=branch
           type=ref,event=pr
-          type=semver,pattern={{version}}
-          type=semver,pattern={{major}}.{{minor}}
-          type=semver,pattern={{major}}
           type=raw,value=latest,enable={{is_default_branch}}
 
     - name: Build and push Backend Docker image
@@ -127,7 +135,7 @@ jobs:
       with:
         context: ./backend
         file: ./backend/Dockerfile
-        push: ${{ github.event_name != 'pull_request' }}
+        push: ${{ steps.check-secrets.outputs.secrets-available == 'true' }}
         tags: ${{ steps.meta-backend.outputs.tags }}
         labels: ${{ steps.meta-backend.outputs.labels }}
         cache-from: type=gha
@@ -142,7 +150,9 @@ jobs:
     steps:
     - name: Deployment Success Notification
       run: |
-        echo "🚀 Docker images successfully built and pushed to Docker Hub!"
+        echo "🚀 Docker build process completed!"
         echo "Frontend Image: ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.ref_name }}"
         echo "Backend Image: ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:${{ github.ref_name }}"
-        echo "You can now deploy these images to your production environment."
+        echo ""
+        echo "If images were pushed to Docker Hub, you can now deploy them to your production environment."
+        echo "If not, please configure DOCKERHUB_USERNAME and DOCKERHUB_TOKEN secrets to enable pushing."
